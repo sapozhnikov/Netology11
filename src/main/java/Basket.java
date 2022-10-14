@@ -1,5 +1,11 @@
+import netscape.javascript.JSObject;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+
 import java.io.*;
 import java.util.Arrays;
+import java.util.Map;
 
 public class Basket {
     private String[] products;
@@ -59,6 +65,21 @@ public class Basket {
         }
     }
 
+    public void saveJson(){
+        try (FileWriter file = new FileWriter("basket.json")){
+            JSONObject obj = new JSONObject();
+            for (int i = 0; i < prices.length; i++) {
+                if (itemsInCart[i] != 0){
+                    obj.put(i, itemsInCart[i]);
+                }
+            }
+            file.write(obj.toString());
+            file.flush();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public void SetCart(int[] cart) {
         this.itemsInCart = cart;
         sumProducts = 0;
@@ -87,6 +108,21 @@ public class Basket {
             return basket;
         } catch (IOException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    public void loadFromJson(File textFile) {
+        JSONParser parser = new JSONParser();
+        try {
+            Object obj = parser.parse(new FileReader(textFile));
+            JSONObject jsonObject = (JSONObject) obj;
+            for (Object product : jsonObject.keySet()){
+                int productNum = Integer.parseInt(product.toString());
+                int amount = Integer.parseInt(jsonObject.get(product).toString());
+                addToCart(productNum, amount);
+            }
+        } catch (IOException | ParseException e) {
+            e.printStackTrace();
         }
     }
 }

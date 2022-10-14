@@ -5,13 +5,15 @@ public class Main {
     public static void main(String[] args) {
         String[] products = {"Хлеб", "Яблоки", "Молоко", "Чипсы", "Шоколад"};
         int[] prices = {50, 150, 90, 190, 110};
-        final String basketFileName = "basket.txt";
+        final String basketFileName = "basket.json";
+        ClientLog log = new ClientLog();
 
         Basket basket;
         File basketFile = new File(basketFileName);
         if (basketFile.exists() && !basketFile.isDirectory()) {
             //restore from file
-            basket = Basket.loadFromTxtFile(basketFile);
+            basket = new Basket(products, prices);
+            basket.loadFromJson(basketFile);
         } else {
             //an empty one
             basket = new Basket(products, prices);
@@ -54,9 +56,12 @@ public class Main {
                 continue;
             }
             basket.addToCart(productNumber, productCount);
-            basket.saveTxt(basketFile);
+            log.log(productNumber, productCount);
+            basket.saveJson();
         }
 
         basket.printCart();
+        File logFile = new File("log.csv");
+        log.exportAsCSV(logFile);
     }
 }
