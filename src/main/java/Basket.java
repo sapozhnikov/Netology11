@@ -1,11 +1,9 @@
-import netscape.javascript.JSObject;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 import java.io.*;
 import java.util.Arrays;
-import java.util.Map;
 
 public class Basket {
     private String[] products;
@@ -65,16 +63,16 @@ public class Basket {
         }
     }
 
-    public void saveJson(){
-        try (FileWriter file = new FileWriter("basket.json")){
+    public void saveJson(File fileToSave){
+        try (FileWriter fileWriter = new FileWriter(fileToSave)){
             JSONObject obj = new JSONObject();
             for (int i = 0; i < prices.length; i++) {
                 if (itemsInCart[i] != 0){
                     obj.put(i, itemsInCart[i]);
                 }
             }
-            file.write(obj.toString());
-            file.flush();
+            fileWriter.write(obj.toString());
+            fileWriter.flush();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

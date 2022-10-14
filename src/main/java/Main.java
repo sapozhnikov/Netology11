@@ -1,19 +1,77 @@
+import org.w3c.dom.Document;
+import org.xml.sax.SAXException;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.xpath.*;
 import java.io.File;
+import java.io.IOException;
 import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) {
         String[] products = {"Хлеб", "Яблоки", "Молоко", "Чипсы", "Шоколад"};
         int[] prices = {50, 150, 90, 190, 110};
-        final String basketFileName = "basket.json";
+        //final String basketFileName = "basket.json";
         ClientLog log = new ClientLog();
 
+        //read shop.xml
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder builder = null;
+        Document doc = null;
+        try {
+            builder = factory.newDocumentBuilder();
+            doc = builder.parse(new File("shop.xml"));
+            doc.getDocumentElement().normalize();
+        } catch (ParserConfigurationException | IOException | SAXException e) {
+            throw new RuntimeException(e);
+        }
+
+        boolean configLoadEnabled;
+        String configLoadFileName;
+        String configLoadFormat;
+        boolean configSaveEnabled;
+        String configSaveFileName;
+        String configSaveFormat;
+        boolean configLogEnabled;
+        String configLogFileName;
+
+        try {
+            XPathExpression xp = XPathFactory.newInstance().newXPath().compile("//config/load/enabled");
+            configLoadEnabled = Boolean.parseBoolean(xp.evaluate(doc));
+            xp = XPathFactory.newInstance().newXPath().compile("//config/load/fileName");
+            configLoadFileName = xp.evaluate(doc);
+            xp = XPathFactory.newInstance().newXPath().compile("//config/load/format");
+            configLoadFormat = xp.evaluate(doc);
+
+            xp = XPathFactory.newInstance().newXPath().compile("//config/save/enabled");
+            configSaveEnabled = Boolean.parseBoolean(xp.evaluate(doc));
+            xp = XPathFactory.newInstance().newXPath().compile("//config/save/fileName");
+            configSaveFileName = xp.evaluate(doc);
+            xp = XPathFactory.newInstance().newXPath().compile("//config/save/format");
+            configSaveFormat = xp.evaluate(doc);
+
+            xp = XPathFactory.newInstance().newXPath().compile("//config/log/enabled");
+            configLogEnabled = Boolean.parseBoolean(xp.evaluate(doc));
+            xp = XPathFactory.newInstance().newXPath().compile("//config/log/fileName");
+            configLogFileName = xp.evaluate(doc);
+
+        } catch (XPathExpressionException e) {
+            throw new RuntimeException(e);
+        }
+
         Basket basket;
-        File basketFile = new File(basketFileName);
-        if (basketFile.exists() && !basketFile.isDirectory()) {
+        File basketFile = new File(configLoadFileName);
+        if (configLoadEnabled && basketFile.exists() && !basketFile.isDirectory()) {
             //restore from file
-            basket = new Basket(products, prices);
-            basket.loadFromJson(basketFile);
+            if (configLoadFormat.equals("json")) {
+                basket = new Basket(products, prices);
+                basket.loadFromJson(basketFile);
+            }
+            else {
+                basket = Basket.loadFromTxtFile(basketFile);
+            }
         } else {
             //an empty one
             basket = new Basket(products, prices);
@@ -57,11 +115,19 @@ public class Main {
             }
             basket.addToCart(productNumber, productCount);
             log.log(productNumber, productCount);
-            basket.saveJson();
+            if (configSaveEnabled) {
+                if (configSaveFormat.equals("json")) {
+                    basket.saveJson(new File(configSaveFileName));
+                } else if (configSaveFormat.equals("csv")) {
+                    basket.saveTxt(new File(configSaveFileName));
+                }
+            }
         }
 
         basket.printCart();
-        File logFile = new File("log.csv");
-        log.exportAsCSV(logFile);
+        if (configLogEnabled) {
+            File logFile = new File(configLogFileName);
+            log.exportAsCSV(logFile);
+        }
     }
 }
