@@ -66,8 +66,7 @@ public class Main {
         if (configLoadEnabled && basketFile.exists() && !basketFile.isDirectory()) {
             //restore from file
             if (configLoadFormat.equals("json")) {
-                basket = new Basket(products, prices);
-                basket.loadFromJson(basketFile);
+                basket = Basket.loadFromJson(basketFile);
             }
             else {
                 basket = Basket.loadFromTxtFile(basketFile);

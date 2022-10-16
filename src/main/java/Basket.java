@@ -1,8 +1,7 @@
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
+import com.google.gson.Gson;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.util.Arrays;
 
 public class Basket {
@@ -64,15 +63,10 @@ public class Basket {
     }
 
     public void saveJson(File fileToSave){
+        Gson gson = new Gson();
+        String json = gson.toJson(this);
         try (FileWriter fileWriter = new FileWriter(fileToSave)){
-            JSONObject obj = new JSONObject();
-            for (int i = 0; i < prices.length; i++) {
-                if (itemsInCart[i] != 0){
-                    obj.put(i, itemsInCart[i]);
-                }
-            }
-            fileWriter.write(obj.toString());
-            fileWriter.flush();
+            fileWriter.write(json);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -109,18 +103,14 @@ public class Basket {
         }
     }
 
-    public void loadFromJson(File textFile) {
-        JSONParser parser = new JSONParser();
+    public static Basket loadFromJson(File textFile) {
         try {
-            Object obj = parser.parse(new FileReader(textFile));
-            JSONObject jsonObject = (JSONObject) obj;
-            for (Object product : jsonObject.keySet()){
-                int productNum = Integer.parseInt(product.toString());
-                int amount = Integer.parseInt(jsonObject.get(product).toString());
-                addToCart(productNum, amount);
-            }
-        } catch (IOException | ParseException e) {
-            e.printStackTrace();
+            String jsonContent = Files.readString(textFile.toPath());
+            Gson gson = new Gson();
+            Basket basket = gson.fromJson(jsonContent, Basket.class);
+            return basket;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 }
